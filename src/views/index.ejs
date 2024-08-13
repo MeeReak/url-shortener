@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <style>
+      body {
+        font-family: "Comic Sans MS", sans-serif;
+        background-color: #f0f8ff;
+        color: #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      div {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+      }
+
+      h1 {
+        color: #ff69b4;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      input[type="url"] {
+        width: 80%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        font-size: 16px;
+        color: #ff69b4;
+        outline: none;
+      }
+
+      button {
+        background-color: hsl(330, 100%, 71%);
+        color: #fff;
+        border: none;
+        padding: 10px 20px; /* Adjust padding for button content */
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        /* Added property for height */
+        height: 40px; /* Adjust height as needed to match input */
+      }
+
+      button:hover {
+        background-color: #ff85c5;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+      }
+
+      th {
+        background-color: #ff69b4;
+        color: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      tr:hover {
+        background-color: #ffefef;
+      }
+
+      .form {
+        display: flex;
+        gap: 10px;
+      }
+
+      /* Scrollable table body with hidden scrollbar */
+      .scrollable-table {
+        max-height: 200px; /* Adjust height to show only 5 rows */
+        overflow-y: auto;
+        position: relative;
+      }
+
+      .scrollable-table::-webkit-scrollbar {
+        width: 0px;
+        background: transparent; /* Hide the scrollbar */
+      }
+
+      .scrollable-table {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      /* Fade-out effect */
+      .scrollable-table tbody tr {
+        opacity: 1;
+        transition: opacity 0.3s ease-in-out;
+      }
+
+      .scrollable-table tbody tr.hidden {
+        opacity: 0;
+      }
+
+      /* Truncate long URLs with ellipsis */
+      .longUrl {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px; /* Adjust width as needed */
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>URL Shortener</h1>
+
+      <!-- Form to input URL -->
+      <form class="form" action="/v1/url/add" method="POST">
+        <input
+          type="url"
+          name="longUrl"
+          placeholder="Enter your URL"
+          required
+        />
+        <button type="submit">Shrink</button>
+      </form>
+
+      <!-- Scrollable Table to list URLs -->
+      <div class="scrollable-table">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Long URL</th>
+              <th>Short URL</th>
+              <th>Clicks</th>
+            </tr>
+          </thead>
+          <tbody id="urlTableBody">
+            <% allUrl.forEach((url, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td class="longUrl" title="<%= url.longUrl %>">
+                <%= url.longUrl %>
+              </td>
+              <td><%= url.shortUrl %></td>
+              <td><%= url.click %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const tableBody = document.getElementById("urlTableBody");
+      const rows = tableBody.getElementsByTagName("tr");
+
+      document
+        .querySelector(".scrollable-table")
+        .addEventListener("scroll", function () {
+          const scrollPosition = this.scrollTop;
+
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowTop = row.offsetTop;
+            const rowHeight = row.offsetHeight;
+
+            // Calculate if the row is above the visible area
+            if (rowTop + rowHeight < scrollPosition) {
+              row.classList.add("hidden");
+            } else {
+              row.classList.remove("hidden");
+            }
+          }
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+  // Get all the elements with the short URL (third column)
+  const shortUrlCells = document.querySelectorAll("td:nth-child(3)");
+
+  shortUrlCells.forEach((cell) => {
+    cell.addEventListener("click", function () {
+      // Get the short URL value
+      const shortUrl = this.innerText.trim();
+
+      // Create a URL for the request
+      const url = "/v1/url";
+
+      // Send the POST request with the short URL in the request body
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ shortUrl })
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success:", data);
+          // Optionally, you can handle the response here
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+  });
+});
+
+
+     </script>
+  </body>
+</html>
